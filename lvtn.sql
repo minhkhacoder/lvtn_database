@@ -38,7 +38,7 @@ CREATE TABLE `accounts` (
 
 LOCK TABLES `accounts` WRITE;
 /*!40000 ALTER TABLE `accounts` DISABLE KEYS */;
-INSERT INTO `accounts` VALUES ('ACC02','0869117530','7c222fb2927d828af22f592134e8932480637c0d','user'),('ACC03','0329110540','239efe1121fa4e5483abfb2882a6b17eb2100c3a','user'),('ACC04','0345987377','7c222fb2927d828af22f592134e8932480637c0d','user'),('ACC05','0986555666','7c222fb2927d828af22f592134e8932480637c0d','user');
+INSERT INTO `accounts` VALUES ('ACC02','0869117530','7c222fb2927d828af22f592134e8932480637c0d','seller'),('ACC03','0329110540','239efe1121fa4e5483abfb2882a6b17eb2100c3a','user'),('ACC04','0345987377','7c222fb2927d828af22f592134e8932480637c0d','user'),('ACC05','0986555666','7c222fb2927d828af22f592134e8932480637c0d','user');
 /*!40000 ALTER TABLE `accounts` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -79,8 +79,7 @@ CREATE TABLE `category` (
   `cat_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `cat_name` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `cat_parent` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  PRIMARY KEY (`cat_id`),
-  UNIQUE KEY `cat_name` (`cat_name`)
+  PRIMARY KEY (`cat_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -90,6 +89,7 @@ CREATE TABLE `category` (
 
 LOCK TABLES `category` WRITE;
 /*!40000 ALTER TABLE `category` DISABLE KEYS */;
+INSERT INTO `category` VALUES ('CAT01','Cycling',NULL),('CAT02','Golf',NULL),('CAT03','Running',NULL),('CAT04','Tennis',NULL),('CAT05','Swimming',NULL),('CAT06','Soccer',NULL),('CAT07','Football',NULL),('CAT08','Volleyball',NULL),('CAT09','Bikes','CAT01'),('CAT10','Glasses & Goggles','CAT01'),('CAT11','Accessories','CAT01'),('CAT12','Helmets','CAT01'),('CAT13','Golf Clubs','CAT02'),('CAT14','Golf Club Parts','CAT02'),('CAT15','Golf Balls','CAT02'),('CAT16','Gloves','CAT02'),('CAT17','Golf Carts','CAT02'),('CAT18','Headlamps','CAT03'),('CAT19','Waist Packs','CAT03'),('CAT20','Stopwatches','CAT03'),('CAT21','Activity Trackers','CAT03'),('CAT22','Accessories','CAT04'),('CAT23','Balls','CAT04'),('CAT24','Court Equipment','CAT04'),('CAT25','Racquets','CAT04'),('CAT26','Aquatic Gloves','CAT05'),('CAT27','Earplugs','CAT05'),('CAT28','Swim Caps','CAT05'),('CAT29','Swimwear','CAT05'),('CAT30','Balls','CAT06'),('CAT31','Footwear','CAT06'),('CAT32','Clothing','CAT06'),('CAT33','Player Equipment','CAT06'),('CAT34','Footballs','CAT07'),('CAT35','Gloves','CAT07'),('CAT36','Footwear','CAT07'),('CAT37','Protective Gear','CAT07'),('CAT38','Volleyballs','CAT08'),('CAT39','Court Equipment','CAT08'),('CAT40','Footwear','CAT08'),('CAT41','Protective Gear','CAT08');
 /*!40000 ALTER TABLE `category` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -187,7 +187,7 @@ CREATE TABLE `orderdetail` (
   `ordt_quantity` int DEFAULT '1',
   `ordt_costShip` decimal(3,2) DEFAULT '0.00',
   `ordt_total` decimal(6,2) DEFAULT '0.00',
-  PRIMARY KEY (`or_id`,`pro_id`),
+  PRIMARY KEY (`or_id`,`pro_id`,`pay_id`),
   KEY `fk_ordt_pro` (`pro_id`),
   KEY `fk_ordt_pay` (`pay_id`),
   CONSTRAINT `fk_ordt_or` FOREIGN KEY (`or_id`) REFERENCES `orders` (`or_id`),
@@ -298,7 +298,8 @@ CREATE TABLE `product` (
   `prod_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `pro_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `pro_desc` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
-  `pro_price` decimal(5,2) NOT NULL,
+  `pro_material` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pro_image` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `pro_status` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`pro_id`),
   KEY `fk_pro_cat` (`cat_id`),
@@ -494,7 +495,7 @@ CREATE TABLE `seller` (
 
 LOCK TABLES `seller` WRITE;
 /*!40000 ALTER TABLE `seller` DISABLE KEYS */;
-INSERT INTO `seller` VALUES ('SELLER01','ACC02','sportstore','Store sports buy equipment sports','HCM','https://drive.google.com/file/d/1FKQjr2dZHdWX8Rxbd-weisfsEYD_2-nU/view?usp=drivesdk'),('SELLER02','ACC04','store123','Store sports buy equipment sports','HCM','https://drive.google.com/file/d/1FL9LI-Gv4Tp0scqXbPuhkaZ73ZJUOflh/view?usp=drivesdk');
+INSERT INTO `seller` VALUES ('SELLER01','ACC02','storesports','Store sports buy equipment sports','HCM','https://drive.google.com/file/d/1aChSWOBVq2ZzOv1_OiQjN2iVohYnHPnS/view?usp=drivesdk');
 /*!40000 ALTER TABLE `seller` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -676,10 +677,11 @@ WHERE seller_name = p_seller_name;
 IF count > 0 THEN
    SELECT 'Store name already exists, please choose a different name';
 ELSE
+	
    SET new_seller_id = (SELECT CONCAT('SELLER', LPAD(COALESCE(MAX(SUBSTR(seller_id, 4)), 0) + 1, 2, '0')) FROM seller);
    INSERT INTO seller (seller_id, acc_id, seller_name, seller_address)
    VALUES (new_seller_id, p_acc_id, p_seller_name, p_seller_address);
-
+   UPDATE accounts SET acc_role = 'seller' WHERE acc_id = p_acc_id;
    SELECT 'Store created successfully!';
 END IF;
 
@@ -740,4 +742,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-02-15 22:08:44
+-- Dump completed on 2023-02-16 21:50:15
