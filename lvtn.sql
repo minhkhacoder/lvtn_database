@@ -51,11 +51,9 @@ DROP TABLE IF EXISTS `brand`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `brand` (
   `bra_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `cat_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `bra_name` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
+  `bra_name` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`bra_id`),
-  KEY `fk_bra_cat` (`cat_id`),
-  CONSTRAINT `fk_bra_cat` FOREIGN KEY (`cat_id`) REFERENCES `category` (`cat_id`)
+  UNIQUE KEY `bra_name` (`bra_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -65,6 +63,7 @@ CREATE TABLE `brand` (
 
 LOCK TABLES `brand` WRITE;
 /*!40000 ALTER TABLE `brand` DISABLE KEYS */;
+INSERT INTO `brand` VALUES ('BRA09','adidas'),('BRA02','AliveCor'),('BRA17','ALLPAIPAI'),('BRA14','Amazfit'),('BRA21','Arena'),('BRA08','Callaway'),('BRA15','Carhartt'),('BRA01','Dickies'),('BRA12','Fitbit'),('BRA23','Franklin Sports'),('BRA10','Gold Toe'),('BRA03','Hanes'),('BRA19','KNIPEX'),('BRA06','Master Lock'),('BRA05','Nike'),('BRA22','NuLink'),('BRA16','PENN'),('BRA04','PUMA'),('BRA25','Sena'),('BRA24','Shock Doctor'),('BRA11','Speedo'),('BRA20','STEARNS'),('BRA07','Thermajohn'),('BRA18','TYR'),('BRA27','Wilson'),('BRA26','YANYODO');
 /*!40000 ALTER TABLE `brand` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -102,9 +101,12 @@ DROP TABLE IF EXISTS `classify`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `classify` (
   `cla_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
+  `pro_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `cla_group` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `cla_name` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  PRIMARY KEY (`cla_id`)
+  PRIMARY KEY (`cla_id`),
+  KEY `fk_cla_pro` (`pro_id`),
+  CONSTRAINT `fk_cla_pro` FOREIGN KEY (`pro_id`) REFERENCES `product` (`pro_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -114,8 +116,34 @@ CREATE TABLE `classify` (
 
 LOCK TABLES `classify` WRITE;
 /*!40000 ALTER TABLE `classify` DISABLE KEYS */;
+INSERT INTO `classify` VALUES ('CLA01','PRO01','Color','White'),('CLA02','PRO02','Color','Yellow / Black');
 /*!40000 ALTER TABLE `classify` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_classify_insert` BEFORE INSERT ON `classify` FOR EACH ROW BEGIN
+  DECLARE new_id VARCHAR(20);
+  
+  SET new_id = (SELECT CONCAT('CLA', LPAD(COALESCE(MAX(SUBSTR(cla_id, 4)), 0) + 1, 2, '0')) FROM classify);
+  
+  WHILE (SELECT COUNT(*) FROM classify WHERE cla_id = new_id) > 0 DO
+    SET new_id = (SELECT CONCAT('PRO', LPAD(COALESCE(MAX(SUBSTR(cla_id, 4)), 0) + 1, 2, '0')) FROM classify);
+  END WHILE;
+  
+  SET NEW.cla_id = new_id;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `customer`
@@ -148,29 +176,30 @@ INSERT INTO `customer` VALUES ('CUS02','ACC02','kha27',NULL,NULL,NULL),('CUS03',
 UNLOCK TABLES;
 
 --
--- Table structure for table `image`
+-- Table structure for table `images`
 --
 
-DROP TABLE IF EXISTS `image`;
+DROP TABLE IF EXISTS `images`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `image` (
+CREATE TABLE `images` (
   `img_url` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `cla_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `img_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
+  `pro_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
+  `img_name` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   PRIMARY KEY (`img_url`),
-  KEY `fk_img_cla` (`cla_id`),
-  CONSTRAINT `fk_img_cla` FOREIGN KEY (`cla_id`) REFERENCES `classify` (`cla_id`)
+  KEY `fk_img_pro` (`pro_id`),
+  CONSTRAINT `fk_img_pro` FOREIGN KEY (`pro_id`) REFERENCES `product` (`pro_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `image`
+-- Dumping data for table `images`
 --
 
-LOCK TABLES `image` WRITE;
-/*!40000 ALTER TABLE `image` DISABLE KEYS */;
-/*!40000 ALTER TABLE `image` ENABLE KEYS */;
+LOCK TABLES `images` WRITE;
+/*!40000 ALTER TABLE `images` DISABLE KEYS */;
+INSERT INTO `images` VALUES ('https://drive.google.com/file/d/10acIaBy21e_IuuxnI1UWbYZrJbO96Wlq/view?usp=drivesdk','PRO01','WILSON AVP Soft Play Volleyball 2.jpg'),('https://drive.google.com/file/d/1IgtVOwufQ_HW5l6cICLL45c8ZvrE4rqG/view?usp=drivesdk','PRO01','WILSON AVP Soft Play Volleyball 3.jpg'),('https://drive.google.com/file/d/1jUONLPCdlWWnMk2jPNZ0RrQUueHEuQ6r/view?usp=drivesdk','PRO01','WILSON AVP Soft Play Volleyball 1.jpg'),('https://drive.google.com/file/d/1nMQnlbot7TF5cFd-WqQpRjyE-EJh_fwW/view?usp=drivesdk','PRO02','WILSON AVP OPTX Game Volleyballs 3.jpg'),('https://drive.google.com/file/d/1p6f3xHn_IpZi-rmTH9lK1T6tbNMffuM8/view?usp=drivesdk','PRO02','WILSON AVP OPTX Game Volleyballs 2.jpg'),('https://drive.google.com/file/d/1pePpN2IqOuA0qKXtiWrILt9d3NZ3ZXWg/view?usp=drivesdk','PRO02','WILSON AVP OPTX Game Volleyballs 1.jpg'),('https://drive.google.com/file/d/1z7Ap6dQczlJ5gd7EJye6d07PnLaLmzef/view?usp=drivesdk','PRO01','WILSON AVP Soft Play Volleyball 4.jpg');
+/*!40000 ALTER TABLE `images` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -280,6 +309,7 @@ CREATE TABLE `producer` (
 
 LOCK TABLES `producer` WRITE;
 /*!40000 ALTER TABLE `producer` DISABLE KEYS */;
+INSERT INTO `producer` VALUES ('PROD02','Wilson'),('PROD01','YANYODO');
 /*!40000 ALTER TABLE `producer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -299,7 +329,8 @@ CREATE TABLE `product` (
   `pro_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `pro_desc` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
   `pro_material` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `pro_image` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `pro_price` decimal(5,2) NOT NULL,
+  `pro_quantity` int NOT NULL,
   `pro_status` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`pro_id`),
   KEY `fk_pro_cat` (`cat_id`),
@@ -319,8 +350,34 @@ CREATE TABLE `product` (
 
 LOCK TABLES `product` WRITE;
 /*!40000 ALTER TABLE `product` DISABLE KEYS */;
+INSERT INTO `product` VALUES ('PRO01','CAT38','BRA27','SELLER01','PROD02','WILSON AVP Soft Play Volleyball - Official Size','Wilson AVP Soft Play Volleyball - Official Size, White\nAVP Official Size: The size & weight used by the AVP, ideal for ages 13 and up','Synthetic Leather Cover',16.95,1000,1),('PRO02','CAT38','BRA27','SELLER01','PROD02','WILSON AVP OPTX Game Volleyballs- Official Size','The vibrant color palette and Optic Flow graphics allow for better ball tracking in the dynamic and diverse environments of beach volleyballAVP Official Size: The size & weight used by the AVP, ideal for ages 13 and up','Composite',77.99,1000,1);
 /*!40000 ALTER TABLE `product` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_product_insert` BEFORE INSERT ON `product` FOR EACH ROW BEGIN
+  DECLARE new_id VARCHAR(20);
+  
+  SET new_id = (SELECT CONCAT('PRO', LPAD(COALESCE(MAX(SUBSTR(pro_id, 4)), 0) + 1, 2, '0')) FROM product);
+  
+  WHILE (SELECT COUNT(*) FROM product WHERE pro_id = new_id) > 0 DO
+    SET new_id = (SELECT CONCAT('PRO', LPAD(COALESCE(MAX(SUBSTR(pro_id, 4)), 0) + 1, 2, '0')) FROM product);
+  END WHILE;
+  
+  SET NEW.pro_id = new_id;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `product_sale`
@@ -549,36 +606,6 @@ LOCK TABLES `shipping` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `unitprice`
---
-
-DROP TABLE IF EXISTS `unitprice`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `unitprice` (
-  `up_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `pro_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `cla_id` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `up_price` decimal(5,2) NOT NULL,
-  `up_quantity` int NOT NULL,
-  PRIMARY KEY (`up_id`,`pro_id`),
-  KEY `fk_up_pro` (`pro_id`),
-  KEY `fk_up_cla` (`cla_id`),
-  CONSTRAINT `fk_up_cla` FOREIGN KEY (`cla_id`) REFERENCES `classify` (`cla_id`),
-  CONSTRAINT `fk_up_pro` FOREIGN KEY (`pro_id`) REFERENCES `product` (`pro_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `unitprice`
---
-
-LOCK TABLES `unitprice` WRITE;
-/*!40000 ALTER TABLE `unitprice` DISABLE KEYS */;
-/*!40000 ALTER TABLE `unitprice` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Dumping routines for database 'lvtn'
 --
 /*!50003 DROP FUNCTION IF EXISTS `fn_update_customer` */;
@@ -742,4 +769,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-02-16 21:50:15
+-- Dump completed on 2023-02-18 22:07:07
